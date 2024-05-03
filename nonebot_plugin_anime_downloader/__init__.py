@@ -36,7 +36,7 @@ from .acgrip import (
 
 
 __plugin_meta__ = PluginMetadata(
-    name="nonebot_plugin_anime_downloader",
+    name="番剧下载",
     description="基于 qBittorrent Web UI 的番剧下载 NoneBot 插件",
     usage="/sub 订阅 Tag\n/unsub 取消订阅 Tag\n/listsub 查看订阅列表",
     type="application",
