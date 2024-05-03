@@ -59,7 +59,9 @@ if not download_path.exists():
         download_path.mkdir(parents=True)
     except PermissionError:
         download_path = store.get_data_dir("nonebot_plugin_anime_downloader")
-        logger.warning(f"无法创建下载目录！请自行创建下载目录后重启 NoneBot. 本次下载目录为: {download_path}")
+        logger.warning(
+            f"无法创建下载目录！请自行创建下载目录后重启 NoneBot. 本次下载目录为: {download_path}"
+        )
 
 tasks_file = store.get_data_file("nonebot_plugin_anime_downloader", "tasks.json")
 
@@ -246,7 +248,6 @@ async def get_target(event: Event) -> Target:
 subscribes = on_command("sub", aliases={"订阅"}, priority=5)
 unsubscribes = on_command("unsub", aliases={"取消订阅"}, priority=5)
 list_subscribes = on_command("listsub", aliases={"订阅列表", "sublist"}, priority=5)
-test = on_command("anitest", priority=5)
 
 
 @subscribes.handle()
@@ -313,24 +314,3 @@ async def list_sub_handle(target: Target = Depends(get_target)):
     for index, tags in enumerate(tags_list):
         msg += f"{index + 1}. {' '.join(tags)}\n"
     await list_subscribes.finish(msg)
-
-
-@test.handle()
-async def test_handle():
-    await test.send("开始测试下载！")
-
-    tags = ["桜都字幕组", "GILRS", "BAND", "CRY"]
-
-    torrent_data = await fetch_torrent_data(
-        f"{plugin_config.acgrip_url}/t/302631.torrent"
-    )
-    torrent_info = await torrent_downloader.download_torrent(
-        torrent_data, generate_folder_name(tags)
-    )
-    task_manager.add(
-        {
-            "id": "private_2667292003",
-            "content": torrent_info,
-            "torrent_id": 302631,
-        }
-    )
