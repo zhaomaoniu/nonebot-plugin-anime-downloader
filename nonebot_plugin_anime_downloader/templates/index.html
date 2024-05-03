@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ title }}</title>
+</head>
+<body>
+    <h1>{{ title }}</h1>
+    <video width="668" height="376" controls>
+        <source src="{{ url_for('video', path=video_path) }}" type="{{ video_type }}">
+        Your browser does not support the video tag.
+    </video>
+</body>
+</html>
