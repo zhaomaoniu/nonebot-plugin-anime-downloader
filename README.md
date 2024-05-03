@@ -18,6 +18,8 @@
 | unsub | 取消订阅 | 通过 Tag 取消订阅番剧 | `unsub Up to 21°C Nijiyon Animation 2 MP4` |
 | listsub | sublist, 订阅列表 | 查看当前用户/群组的订阅列表 | `sublist` |
 
+这里的 Tag 就是用来在 ACG.RIP 搜索的关键词，番剧名、分辨率、字幕组等等，只要能在 ACG.RIP 搜索到的都可以
+
 > 记得加上你的命令头哦
 
 ## 效果
