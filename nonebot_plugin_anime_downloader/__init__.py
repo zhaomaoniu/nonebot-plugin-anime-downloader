@@ -141,44 +141,44 @@ async def fetch_acgrip_data():
                         }
                     )
 
-                # set a scheduler to check if the video is downloaded
-                async def check_video_downloaded(
-                    title: str, torrent_id: int, user_id: str
-                ):
-                    logger.info(
-                        f"Checking whether {title} is downloaded for {user_id}..."
-                    )
-                    if torrent_id in video_manager.ids:
+                    # set a scheduler to check if the video is downloaded
+                    async def check_video_downloaded(
+                        title: str, torrent_id: int, user_id: str
+                    ):
                         logger.info(
-                            f"{title} is downloaded for {user_id}! Sending message..."
+                            f"Checking whether {title} is downloaded for {user_id}..."
                         )
-                        # send message to user
-                        msg = (
-                            f"{title} 现在可以观看了！\n"
-                            + f"{plugin_config.anime_url}:{nonebot.get_driver().config.port}/anime/{torrent_id}"
-                        )
-                        chat_type = str(user_id).split("_")[0]
-                        id_ = str(user_id).split("_")[-1]
-                        target = Target(
-                            id=id_,
-                            parent_id=id_ if chat_type == "group" else "",
-                            channel=chat_type == "group",
-                            private=chat_type == "private",
-                        )
-                        await UniMessage(msg).send(target)
-                        logger.info(f"Message sent to {user_id}!")
+                        if torrent_id in video_manager.ids:
+                            logger.info(
+                                f"{title} is downloaded for {user_id}! Sending message..."
+                            )
+                            # send message to user
+                            msg = (
+                                f"{title} 现在可以观看了！\n"
+                                + f"{plugin_config.anime_url}:{nonebot.get_driver().config.port}/anime/{torrent_id}"
+                            )
+                            chat_type = str(user_id).split("_")[0]
+                            id_ = str(user_id).split("_")[-1]
+                            target = Target(
+                                id=id_,
+                                parent_id=id_ if chat_type == "group" else "",
+                                channel=chat_type == "group",
+                                private=chat_type == "private",
+                            )
+                            await UniMessage(msg).send(target)
+                            logger.info(f"Message sent to {user_id}!")
 
-                        scheduler.remove_job(f"{title}_{user_id}")
-                    else:
-                        logger.info(f"{title} is not downloaded yet for {user_id}.")
+                            scheduler.remove_job(f"{title}_{user_id}")
+                        else:
+                            logger.info(f"{title} is not downloaded yet for {user_id}.")
 
-                scheduler.add_job(
-                    check_video_downloaded,
-                    "interval",
-                    seconds=10,
-                    args=(entry["title"], int(entry["id"]), user.id),
-                    id=f"{entry['title']}_{user.id}",
-                )
+                    scheduler.add_job(
+                        check_video_downloaded,
+                        "interval",
+                        seconds=10,
+                        args=(entry["title"], int(entry["id"]), user.id),
+                        id=f"{entry['title']}_{user.id}",
+                    )
 
 
 @scheduler.scheduled_job("interval", seconds=60)
