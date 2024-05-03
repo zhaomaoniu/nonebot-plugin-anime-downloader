@@ -25,6 +25,9 @@ class VideoManager:
         )
 
     def add_route(self, video_path: Path, torrent_id: int) -> None:
+        if torrent_id not in self.ids:
+            logger.success(f"Added route for video {video_path.name}.")
+
         self.ids.append(torrent_id)
 
         @self.app.get(f"/anime/{torrent_id}")
@@ -38,5 +41,3 @@ class VideoManager:
                     "video_type": f"video/{video_path.suffix[1:]}",
                 },
             )
-
-        logger.success(f"Added route for video {video_path.name}.")
