@@ -52,16 +52,25 @@ else:
     plugin_config = Config.parse_obj(nonebot.get_driver().config)
 
 
+download_path = Path(plugin_config.download_path)
+
+if not download_path.exists():
+    try:
+        download_path.mkdir(parents=True)
+    except PermissionError:
+        download_path = store.get_data_dir("nonebot_plugin_anime_downloader")
+        logger.warning(f"无法创建下载目录！请自行创建下载目录后重启 NoneBot. 本次下载目录为: {download_path}")
+
 tasks_file = store.get_data_file("nonebot_plugin_anime_downloader", "tasks.json")
 
 task_manager = TaskManager(tasks_file)
-video_manager = VideoManager(nonebot.get_app(), Path(plugin_config.download_path))
+video_manager = VideoManager(nonebot.get_app(), download_path)
 
 torrent_downloader = TorrentDownloader(
     plugin_config.qbittorrent_host,
     plugin_config.qbittorrent_username,
     plugin_config.qbittorrent_password,
-    Path(plugin_config.download_path),
+    download_path,
 )
 
 acg_rip_file = store.get_data_file("nonebot_plugin_anime_downloader", "acgrip.db")

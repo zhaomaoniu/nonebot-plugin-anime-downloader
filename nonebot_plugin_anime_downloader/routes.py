@@ -11,9 +11,6 @@ class VideoManager:
         if not isinstance(app, FastAPI):
             raise TypeError("app must be an instance of FastAPI.")
 
-        if not download_path.exists():
-            download_path.mkdir()
-
         self.ids: List[int] = []
         self.app = app
         self.download_path = download_path
