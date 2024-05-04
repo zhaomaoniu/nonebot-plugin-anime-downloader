@@ -130,7 +130,7 @@ def convert_tags_to_query(tags: List[str]) -> str:
     return query
 
 
-def get_anime_data(tags: List[str]) -> List[Dict[str, str]]:
+async def get_anime_data(tags: List[str], base_url: str) -> List[Dict[str, str]]:
     """Fetches anime data from ACG.RIP.
 
     Args:
@@ -147,7 +147,7 @@ def get_anime_data(tags: List[str]) -> List[Dict[str, str]]:
       }
     """
     query = convert_tags_to_query(tags)
-    html = make_request(f"?term={query}")
+    html = await make_request(f"?term={query}", base_url)
     html = replace_html_entities(html)
     data = extract_data(html)
     return data
@@ -165,6 +165,3 @@ async def main() -> None:
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     loop.run_until_complete(main())
-
-
-__all__ = ["get_anime_data", "fetch_torrent_data"]

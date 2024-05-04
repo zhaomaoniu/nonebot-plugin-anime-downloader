@@ -17,6 +17,8 @@
 | sub | 订阅 | 通过 Tag 订阅番剧 | `sub Up to 21°C Nijiyon Animation 2 MP4` |
 | unsub | 取消订阅 | 通过 Tag 取消订阅番剧 | `unsub Up to 21°C Nijiyon Animation 2 MP4` |
 | listsub | sublist, 订阅列表 | 查看当前用户/群组的订阅列表 | `sublist` |
+| amnsc | 番剧搜索, 搜索番剧, animesearch | 通过关键词搜索番剧 | `amnsc Nijiyon Animation 2` |
+| amnd | 番剧下载, 下载番剧, animedownload | 通过 资源ID 下载番剧 | `amnd 114514` |
 
 这里的 Tag 就是用来在 ACG.RIP 搜索的关键词，番剧名、分辨率、字幕组等等，只要能在 ACG.RIP 搜索到的都可以
 
@@ -34,6 +36,11 @@
 1. Up to 21°C Nijiyon Animation 2 MP4
 
 (过了一段时间)
+
+**bot**: [Up to 21°C] Love Live！虹咲學園 學園偶像同好會 短篇動畫 第二季 / Nijiyon Animation 2 - 04 (ABEMA 1920x1080 AVC AAC MP4) 现在可以观看了！
+[http://example.com/anime/302322](http://example.com/anime/302322)
+
+**user**: `/amnd 302322`
 
 **bot**: [Up to 21°C] Love Live！虹咲學園 學園偶像同好會 短篇動畫 第二季 / Nijiyon Animation 2 - 04 (ABEMA 1920x1080 AVC AAC MP4) 现在可以观看了！
 [http://example.com/anime/302322](http://example.com/anime/302322)

@@ -1,3 +1,4 @@
+import re
 import opencc
 from typing import List
 
@@ -62,6 +63,35 @@ def generate_folder_name(tags: List[str]) -> str:
     )
     folder_name = folder_name.strip()
     return folder_name
+
+
+def extract_tags_from_title(title: str) -> List[str]:
+    """Extract tags from a title, excluding episode numbers.
+
+    Example:
+
+        extract_tags_from_title("[喵萌奶茶屋&LoliHouse] 夜晚的水母不会游泳 / Yoru no Kurage wa Oyogenai - [WebRip 1080p HEVC-10bit AAC][简繁日内封字幕]") -> ['喵萌奶茶屋&LoliHouse', '夜晚的水母不会游泳', '/', 'Yoru', 'no', 'Kurage', 'wa', 'Oyogenai', 'WebRip', '1080p', 'HEVC-10bit', 'AAC', '简繁日内封字幕']
+
+        extract_tags_from_title("【悠哈璃羽字幕社】葬送的芙莉莲/Sousou no Frieren][x264 1080p][CHS]" -> ['悠哈璃羽字幕社', '葬送的芙莉莲', 'Sousou', 'no', 'Frieren', 'x264', '1080p', 'CHS'])
+
+    Args:
+        title: The title to extract tags from.
+
+    Returns:
+        A list of tags extracted from the title.
+
+    """
+    # Remove episode numbers, assuming they are in the format " - 01 " or similar
+    title = re.sub(r" - \d+ ", " ", title)
+
+    # Split the title into tags using special characters as delimiters
+    # The regex pattern "[\[\]\/\s]" matches any of the characters: [ ] / space
+    tags = re.split(r"[\[\]\/\s]", title)
+
+    # Remove empty strings from the list of tags
+    tags = [tag for tag in tags if tag]
+
+    return tags
 
 
 if __name__ == "__main__":

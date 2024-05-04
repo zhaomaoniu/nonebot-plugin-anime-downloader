@@ -25,11 +25,12 @@ from .config import Config
 from .tasks import TaskManager
 from .routes import VideoManager
 from .downloader import TorrentDownloader
-from .utils import is_tag_match_title, generate_folder_name
 from .data_source import ACGRIPBase, UserBase, VideoBase, ACGRIPData, User, Video
+from .utils import is_tag_match_title, generate_folder_name, extract_tags_from_title
 from .acgrip import (
     make_request,
     extract_data,
+    get_anime_data,
     fetch_torrent_data,
     replace_html_entities,
 )
@@ -38,7 +39,7 @@ from .acgrip import (
 __plugin_meta__ = PluginMetadata(
     name="番剧下载",
     description="基于 qBittorrent Web UI 的番剧下载 NoneBot 插件",
-    usage="/sub 订阅 Tag\n/unsub 取消订阅 Tag\n/listsub 查看订阅列表",
+    usage="/sub 订阅 Tag\n/unsub 取消订阅 Tag\n/listsub 查看订阅列表\n/anmsc 搜索番剧\n/anmd 下载番剧",
     type="application",
     homepage="https://github.com/zhaomaoniu/nonebot-plugin-anime-downloader",
     config=Config,
@@ -92,6 +93,31 @@ user_session = sessionmaker(bind=user_engine)()
 video_session = sessionmaker(bind=video_engine)()
 
 
+async def check_video_downloaded(title: str, torrent_id: int, user_id: str):
+    logger.info(f"Checking whether {title} is downloaded for {user_id}...")
+    if torrent_id in video_manager.ids:
+        logger.info(f"{title} is downloaded for {user_id}! Sending message...")
+        # send message to user
+        msg = (
+            f"{title} 现在可以观看了！\n"
+            + f"{plugin_config.anime_url}:{nonebot.get_driver().config.port}/anime/{torrent_id}"
+        )
+        chat_type = str(user_id).split("_")[0]
+        id_ = str(user_id).split("_")[-1]
+        target = Target(
+            id=id_,
+            parent_id=id_ if chat_type == "group" else "",
+            channel=chat_type == "group",
+            private=chat_type == "private",
+        )
+        await UniMessage(msg).send(target)
+        logger.info(f"Message sent to {user_id}!")
+
+        scheduler.remove_job(f"{title}_{user_id}")
+    else:
+        logger.info(f"{title} is not downloaded yet for {user_id}.")
+
+
 @scheduler.scheduled_job("interval", seconds=plugin_config.acgrip_interval)
 @nonebot.get_driver().on_startup
 async def fetch_acgrip_data():
@@ -123,6 +149,24 @@ async def fetch_acgrip_data():
         for tags in tags_list:
             for entry in new_data:
                 if is_tag_match_title(tags, entry["title"]):
+                    # check if the video is already downloaded
+                    if entry["id"] in video_manager.ids:
+                        # send message to user
+                        msg = (
+                            f"{entry['title']} 现在可以观看了！\n"
+                            + f"{plugin_config.anime_url}:{nonebot.get_driver().config.port}/anime/{entry['id']}"
+                        )
+                        chat_type = str(user.id).split("_")[0]
+                        id_ = str(user.id).split("_")[-1]
+                        target = Target(
+                            id=id_,
+                            parent_id=id_ if chat_type == "group" else "",
+                            channel=chat_type == "group",
+                            private=chat_type == "private",
+                        )
+                        await UniMessage(msg).send(target)
+                        continue
+
                     # start download torrent
                     logger.info(f"Downloading {entry['title']} for {user.id}...")
 
@@ -132,9 +176,14 @@ async def fetch_acgrip_data():
                         url = f"{plugin_config.acgrip_url}{entry['url']}.torrent"
 
                     torrent_data = await fetch_torrent_data(url)
-                    torrent_info = await torrent_downloader.download_torrent(
-                        torrent_data, generate_folder_name(tags)
-                    )
+                    try:
+                        torrent_info = await torrent_downloader.download_torrent(
+                            torrent_data, generate_folder_name(tags)
+                        )
+                    except Exception:
+                        logger.warning(
+                            f"Failed to download {entry['title']} for {user.id}! Probably due to the same torrent."
+                        )
                     task_manager.add(
                         {
                             "id": user.id,
@@ -144,36 +193,6 @@ async def fetch_acgrip_data():
                     )
 
                     # set a scheduler to check if the video is downloaded
-                    async def check_video_downloaded(
-                        title: str, torrent_id: int, user_id: str
-                    ):
-                        logger.info(
-                            f"Checking whether {title} is downloaded for {user_id}..."
-                        )
-                        if torrent_id in video_manager.ids:
-                            logger.info(
-                                f"{title} is downloaded for {user_id}! Sending message..."
-                            )
-                            # send message to user
-                            msg = (
-                                f"{title} 现在可以观看了！\n"
-                                + f"{plugin_config.anime_url}:{nonebot.get_driver().config.port}/anime/{torrent_id}"
-                            )
-                            chat_type = str(user_id).split("_")[0]
-                            id_ = str(user_id).split("_")[-1]
-                            target = Target(
-                                id=id_,
-                                parent_id=id_ if chat_type == "group" else "",
-                                channel=chat_type == "group",
-                                private=chat_type == "private",
-                            )
-                            await UniMessage(msg).send(target)
-                            logger.info(f"Message sent to {user_id}!")
-
-                            scheduler.remove_job(f"{title}_{user_id}")
-                        else:
-                            logger.info(f"{title} is not downloaded yet for {user_id}.")
-
                     scheduler.add_job(
                         check_video_downloaded,
                         "interval",
@@ -248,6 +267,12 @@ async def get_target(event: Event) -> Target:
 subscribes = on_command("sub", aliases={"订阅"}, priority=5)
 unsubscribes = on_command("unsub", aliases={"取消订阅"}, priority=5)
 list_subscribes = on_command("listsub", aliases={"订阅列表", "sublist"}, priority=5)
+search = on_command(
+    "anmsc", aliases={"番剧搜索", "搜索番剧", "搜番", "animesearch"}, priority=5
+)
+download = on_command(
+    "anmd", aliases={"番剧下载", "下载番剧", "下番", "animedownload"}, priority=5
+)
 
 
 @subscribes.handle()
@@ -262,7 +287,7 @@ async def sub_handle(target: Target = Depends(get_target), arg: Message = Comman
 
     # check if the user is already subscribed the same tag
     id_ = f"{'private' if target.private else 'group'}_{target.id}"
-    print(id_, target.id, target.private)
+
     user = user_session.query(User).filter_by(id=id_).first()
     if user is not None:
         tags_str = user.tags
@@ -314,3 +339,96 @@ async def list_sub_handle(target: Target = Depends(get_target)):
     for index, tags in enumerate(tags_list):
         msg += f"{index + 1}. {' '.join(tags)}\n"
     await list_subscribes.finish(msg)
+
+
+@search.handle()
+async def search_handle(arg: Message = CommandArg()):
+    if arg.extract_plain_text() == "":
+        await search.finish("请提供搜索关键词！")
+
+    tags = arg.extract_plain_text().split(" ")
+
+    if tags == []:
+        await search.finish("请提供搜索关键词！")
+
+    anime_data = await get_anime_data(tags, plugin_config.acgrip_url)
+
+    if anime_data == []:
+        await search.finish("没有找到相关番剧！")
+
+    msg = ""
+    for entry in anime_data:
+        msg += f"{entry['id']}. {entry['title']}\n"
+
+    await search.send(msg.strip())
+
+    # store the data
+    for entry in anime_data:
+        existing_entry = (
+            acgrip_session.query(ACGRIPData).filter_by(id=entry["id"]).first()
+        )
+        if existing_entry is None:
+            acgrip_session.add(ACGRIPData(**entry))
+
+    acgrip_session.commit()
+
+
+@download.handle()
+async def download_handle(
+    arg: Message = CommandArg(), target: Target = Depends(get_target)
+):
+    if arg.extract_plain_text() == "":
+        await download.finish("请提供资源 ID！")
+
+    args = arg.extract_plain_text().split(" ")
+
+    if len(args) != 1:
+        await download.finish("请提供正确的资源 ID！")
+
+    anime_entry = acgrip_session.query(ACGRIPData).filter_by(id=args[0]).first()
+
+    if anime_entry is None:
+        await download.finish("没有找到相关番剧，请使用搜索功能（/anmsc）获得资源 ID")
+
+    torrent_id = args[0]
+
+    if not torrent_id.isdigit():
+        await download.finish("请提供正确的资源 ID！")
+
+    if int(torrent_id) in video_manager.ids:
+        await download.finish(
+            f"{anime_entry.title} 已存在！\n"
+            + f"{plugin_config.anime_url}:{nonebot.get_driver().config.port}/anime/{torrent_id}"
+        )
+
+    id_ = f"{'private' if target.private else 'group'}_{target.id}"
+
+    tags = extract_tags_from_title(anime_entry.title)
+
+    torrent_data = await fetch_torrent_data(
+        f"{plugin_config.acgrip_url}/t/{torrent_id}.torrent"
+    )
+    try:
+        torrent_info = await torrent_downloader.download_torrent(
+            torrent_data, generate_folder_name(tags)
+        )
+    except Exception:
+        await download.finish("下载失败！请稍后重试。")
+
+    task_manager.add(
+        {
+            "id": id_,
+            "content": torrent_info,
+            "torrent_id": int(torrent_id),
+        }
+    )
+
+    await download.send(f"开始下载 {anime_entry.title}...")
+
+    scheduler.add_job(
+        check_video_downloaded,
+        "interval",
+        seconds=10,
+        args=(anime_entry.title, int(torrent_id), id_),
+        id=f"{anime_entry.title}_{id_}",
+    )
