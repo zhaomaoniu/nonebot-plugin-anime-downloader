@@ -2,12 +2,16 @@
 <html>
 <head>
     <title>{{ title }}</title>
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.6.4/plyr.css" />
 </head>
 <body>
-    <h1>{{ title }}</h1>
-    <video width="668" height="376" controls>
-        <source src="{{ url_for('video', path=video_path) }}" type="{{ video_type }}">
+    <script src="https://cdn.plyr.io/3.6.4/plyr.polyfilled.js"></script>
+    <video id="player" playsinline controls>
+        <source src="{{ video_url }}" type="{{ mime_type }}">
         Your browser does not support the video tag.
     </video>
+    <script>
+        const player = new Plyr('#player');
+    </script>
 </body>
 </html>
