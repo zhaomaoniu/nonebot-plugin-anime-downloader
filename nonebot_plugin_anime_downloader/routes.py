@@ -75,4 +75,8 @@ class VideoManager:
                 media_type=f"video/{video_path.suffix[1:]}",
             )
 
-        logger.success(f"Added route for video {video_path.name}.")
+    def add_routes(self, video_paths: List[Path], torrent_ids: List[int]) -> None:
+        for video_path, torrent_id in zip(video_paths, torrent_ids):
+            self.add_route(video_path, torrent_id)
+
+        logger.success(f"Added routes for {len(video_paths)} videos.")

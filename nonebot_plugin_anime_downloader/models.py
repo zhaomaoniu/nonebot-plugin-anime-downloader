@@ -7,3 +7,4 @@ class Task(TypedDict):
     id: str  # group/private_id
     content: TorrentInfo
     torrent_id: int
+    status: str

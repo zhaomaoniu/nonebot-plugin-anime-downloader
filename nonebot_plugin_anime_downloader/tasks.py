@@ -22,9 +22,3 @@ class TaskManager:
     def add(self, content: Task) -> None:
         self.content.append(content)
         self.save()
-
-    def get(self) -> List[Task]:
-        tasks = self.content
-        self.content = []
-        self.save()
-        return tasks
