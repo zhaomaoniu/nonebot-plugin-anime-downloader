@@ -1,6 +1,6 @@
 [project]
 name = "nonebot-plugin-anime-downloader"
-version = "0.2.1"
+version = "0.2.2"
 description = "✨ 基于 qBittorrent Web UI 的番剧下载 NoneBot 插件 ✨"
 authors = [
     {name = "zhaomaoniu", email = "2667292003@qq.com"},
@@ -16,6 +16,7 @@ dependencies = [
     "opencc>=1.1.7",
     "nonebot-plugin-alconna>=0.42.4",
     "FastAPI>=0.111.0",
+    "uvicorn>=0.30.6",
 ]
 requires-python = ">=3.8"
 readme = "README.md"
